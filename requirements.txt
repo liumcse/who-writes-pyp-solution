@@ -1,0 +1,2 @@
+autopep8==1.4.4
+prompt_toolkit==1.0.14
