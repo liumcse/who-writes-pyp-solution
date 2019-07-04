@@ -1,4 +1,6 @@
 import csv
+import sys
+from lib.graph import Graph
 
 csv_file_location = 'response.csv'
 
@@ -59,8 +61,14 @@ def main(argv):
         clean_data = extract_from_data(
             data_src, idx_identifier, idx_first_choice, idx_second_choice, idx_third_choice)
 
-    print(clean_data)
+    # Process
+    graph = Graph()
+    for student in clean_data:
+        graph.add_student(student["name"], student["first_choice"],
+                          student["second_choice"], student["third_choice"])
+
+    graph.execute()
 
 
 if __name__ == "__main__":
-    main(None)
+    main(sys.argv)
