@@ -1,8 +1,8 @@
 import math
 
 OFFSET = {
-    "first_choice": 30,
-    "second_choice": 20,
+    "first_choice": 10,
+    "second_choice": 10,
     "third_choice": 10
 }
 
