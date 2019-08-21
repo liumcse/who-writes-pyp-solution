@@ -1,4 +1,4 @@
-"""Tests for main."""
+"""Tests for course_list."""
 
 from lib.course_list import CourseList
 import unittest
