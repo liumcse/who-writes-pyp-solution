@@ -1,8 +1,8 @@
-import csv
-import sys
-from lib.graph import Graph
+"""Entry file."""
 
-csv_file_location = 'response.csv'
+import csv
+import click
+from lib.course_list import CourseList
 
 
 def extract_from_data(data_src, pos_identifier, pos_first_choice, pos_second_choice, pos_third_choice):
@@ -10,7 +10,7 @@ def extract_from_data(data_src, pos_identifier, pos_first_choice, pos_second_cho
 
     Arguments:
         data_src [list] -- Rows of data obtained from CSV.
-        pos_identifier [int] -- Column position of identifier (a.k.a. student name).
+        pos_identifier [int] -- Column position of identifier (i.e. student name).
         pos_first_choice [int] -- Column position of 1st choice.
         pos_second_choice [int] -- Column position of 2nd choice.
         pos_third_choice [int] -- Column position of 3rd choice.
@@ -34,7 +34,11 @@ def extract_from_data(data_src, pos_identifier, pos_first_choice, pos_second_cho
     return result
 
 
-def main(argv):
+@click.command()
+@click.argument("csv_file_location")
+def main(csv_file_location):
+    """Generates PYP allocations.
+    """
     clean_data = []
     with open(csv_file_location, newline='') as csv_file:
         reader = csv.reader(csv_file)
@@ -43,32 +47,35 @@ def main(argv):
         idx_second_choice = -1
         idx_third_choice = -1
         data_src = []
+        column_count = 0
         for idx_row, row in enumerate(reader):
             if idx_row == 0:
                 for idx_col, col in enumerate(row):
+                    column_count += 1
                     if col:
-                        print(col, idx_col)
+                        print("{}: {}".format(idx_col, col))
+                print()
                 idx_identifier = int(
-                    input("Which column contains names of students?"))
+                    input("Which column contains names of students? (0-{}) ".format(column_count - 1)))
                 idx_first_choice = int(
-                    input("Which column contains 1st choices?"))
+                    input("Which column contains 1st choices? (0-{}) ".format(column_count - 1)))
                 idx_second_choice = int(
-                    input("Which column contains 2nd choices?"))
+                    input("Which column contains 2nd choices? (0-{}) ".format(column_count - 1)))
                 idx_third_choice = int(
-                    input("Which column contains 3rd choices?"))
+                    input("Which column contains 3rd choices? (0-{}) ".format(column_count - 1)))
                 continue
             data_src.append(row)
         clean_data = extract_from_data(
             data_src, idx_identifier, idx_first_choice, idx_second_choice, idx_third_choice)
 
     # Process
-    graph = Graph()
+    course_list = CourseList()
     for student in clean_data:
-        graph.add_student(student["name"], student["first_choice"],
-                          student["second_choice"], student["third_choice"])
+        course_list.add_student(student["name"], student["first_choice"],
+                                student["second_choice"], student["third_choice"])
 
-    graph.execute()
+    course_list.execute()
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(None)

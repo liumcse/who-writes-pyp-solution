@@ -1,4 +1,6 @@
 import math
+import random
+import json
 
 OFFSET = {
     "first_choice": 10,
@@ -13,12 +15,16 @@ WEIGHT = {
 }
 
 
-class DuplicateStudentException(Exception):
-    def __init__(self, student_name):
-        super().__init__("Duplicate student `" + student_name + "`!")
-
-
 class StudentNode:
+    """Represents a student and their choices.
+
+    Attributes:
+        identifier -- A string represents the name of the student.
+        first_choice -- A string represents the first choice of course.
+        second_choice -- A string represents the second choice of course.
+        third_choice -- A string represents the third choice of course.
+    """
+
     def __init__(self, identifier, first_choice, second_choice, third_choice):
         self.identifier = identifier,
         self.first_choice = first_choice,
@@ -45,7 +51,14 @@ class StudentNode:
         self.offset += new_offset
 
 
-class DirectedEdge:
+class Branch:
+    """Weighted branch that points to a student.
+
+    Attributes:
+        target -- A StudentNode represents the student it points to.
+        weight -- An integer represents the weight of the branch.
+    """
+
     def __init__(self, target, weight):
         self.target = target
         self.weight = weight
@@ -57,16 +70,23 @@ class DirectedEdge:
         return self.weight
 
 
-class Graph:
+class CourseList:
+    """List of courses with weighted branches pointing to students.
+
+    Raises:
+        Exception: When execute() is called more than once.
+    """
+
     def __init__(self):
         self.course_list = []
-        self.edges = {}
+        self.branches = {}
+        self.dirty = False
 
     def _add_course(self, student_node, course_code, weight):
         if course_code not in self.course_list:
             self.course_list.append(course_code)
-            self.edges[course_code] = []
-        self.edges[course_code].append(DirectedEdge(student_node, weight))
+            self.branches[course_code] = []
+        self.branches[course_code].append(Branch(student_node, weight))
 
     def add_student(self, identifier, first_choice, second_choice, third_choice):
         student_node = StudentNode(
@@ -82,20 +102,27 @@ class Graph:
                              WEIGHT["third_choice"])
 
     def execute(self):
-        """Warning: using this function will change Graph state. Call it once only!
+        """Calling this method will result in state change.
         """
+        if self.dirty:
+            raise Exception("Execute should only be called once!")
+        self.dirty = True
         result = {}
         for course_code in self.course_list:
             min_weight = math.inf
             selected = None
-            # Update each edge and find the edge with smallest weight
-            for edge in self.edges[course_code]:
-                student_node = edge.get_student_node()
-                edge_weight = edge.get_weight() + student_node.get_offset()
-                if edge_weight < min_weight:
-                    min_weight = edge_weight
-                    selected = student_node
-            # Add into result
+            # Update each branch and find the one with smallest weight
+            # Use random selection to break tie
+            mapping = {}
+            for branch in self.branches[course_code]:
+                student_node = branch.get_student_node()
+                branch_weight = branch.get_weight() + student_node.get_offset()
+                if branch_weight < min_weight:
+                    min_weight = branch_weight
+                if branch_weight not in mapping:
+                    mapping[branch_weight] = []
+                mapping[branch_weight].append(student_node)
+            selected = random.choice(mapping[min_weight])
             result[course_code] = selected.get_name()
             # Update student offset
             if course_code == selected.get_first_choice():
@@ -108,5 +135,5 @@ class Graph:
                 selected.update_offset(
                     selected.get_offset + OFFSET["third_choice"])
 
-        import json
         print(json.dumps(result, indent=2))
+        return result
